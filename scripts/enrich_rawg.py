@@ -24,7 +24,7 @@ PROGRESS_PATH = os.path.join(os.path.dirname(__file__), "rawg_progress.json")
 API_KEY = os.environ["RAWG_API_KEY"]
 SAVE_EVERY = 200
 REQUEST_DELAY = float(os.environ.get("RAWG_REQUEST_DELAY", "0.25"))
-MAX_REQUESTS = int(os.environ.get("RAWG_MAX_REQUESTS", "9000"))
+MAX_REQUESTS = int(os.environ.get("RAWG_MAX_REQUESTS", "19000"))
 
 
 def normalize(s):
