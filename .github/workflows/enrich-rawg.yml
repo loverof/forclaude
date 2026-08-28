@@ -6,7 +6,7 @@ on:
       max_requests:
         description: "Max RAWG API requests to make this run"
         required: false
-        default: "19000"
+        default: "9000"
 
 permissions:
   contents: write
