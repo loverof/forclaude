@@ -35,7 +35,20 @@ jobs:
           git add games.json scripts/rawg_progress.json
           if git diff --cached --quiet; then
             echo "No changes to commit"
-          else
-            git commit -m "Enrich games.json with RAWG data (poster/metacritic/playtime)"
-            git push
+            exit 0
           fi
+          git commit -m "Enrich games.json with RAWG data (poster/metacritic/playtime)"
+
+          # The branch may have moved while this (long-running) job was
+          # working, so rebase onto the latest before pushing, retrying a
+          # few times in case of a race with another push.
+          for i in 1 2 3 4 5; do
+            git fetch origin "${GITHUB_REF_NAME}"
+            if git rebase "origin/${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}"; then
+              exit 0
+            fi
+            git rebase --abort || true
+            sleep $((i * 5))
+          done
+          echo "::error::Failed to push enrichment results after retries"
+          exit 1
