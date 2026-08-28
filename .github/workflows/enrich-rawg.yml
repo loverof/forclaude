@@ -1,0 +1,41 @@
+name: Enrich games.json from RAWG
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_requests:
+        description: "Max RAWG API requests to make this run"
+        required: false
+        default: "19000"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: enrich-rawg-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  enrich:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run RAWG enrichment
+        env:
+          RAWG_API_KEY: ${{ secrets.RAWG_API_KEY }}
+          RAWG_MAX_REQUESTS: ${{ github.event.inputs.max_requests }}
+        run: python3 scripts/enrich_rawg.py
+
+      - name: Commit and push updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add games.json scripts/rawg_progress.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Enrich games.json with RAWG data (poster/metacritic/playtime)"
+            git push
+          fi
