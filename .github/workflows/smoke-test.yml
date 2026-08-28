@@ -1,0 +1,19 @@
+name: Smoke test VPS site
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check common paths on the VPS
+        run: |
+          for path in "/" "/game-roulette/" "/game-roulette/index.html" "/index.html"; do
+            url="http://85.155.101.157${path}"
+            code=$(curl -sS -o /tmp/body -w "%{http_code}" --max-time 15 "$url" || echo "ERR")
+            echo "== $url -> $code =="
+            head -c 300 /tmp/body
+            echo
+            echo
+          done
