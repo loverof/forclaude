@@ -1,0 +1,34 @@
+name: Server diagnostic
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install sshpass
+        run: sudo apt-get update -y && sudo apt-get install -y sshpass
+
+      - name: Inspect web server setup
+        env:
+          SSHPASS: ${{ secrets.SERVER_PASSWORD }}
+        run: |
+          run() { sshpass -e ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "$1"; }
+          echo "### which web servers are installed/running"
+          run "which nginx apache2 2>/dev/null; systemctl is-active nginx 2>/dev/null; systemctl is-active apache2 2>/dev/null; ss -tlnp 2>/dev/null | grep -E ':80|:443' || netstat -tlnp 2>/dev/null | grep -E ':80|:443'"
+          echo
+          echo "### nginx sites-enabled (if any)"
+          run "ls -la /etc/nginx/sites-enabled/ 2>/dev/null; ls -la /etc/nginx/conf.d/ 2>/dev/null"
+          echo
+          echo "### nginx server blocks mentioning game-roulette or default"
+          run "grep -rl 'game-roulette' /etc/nginx/ 2>/dev/null; grep -rl 'default_server' /etc/nginx/ 2>/dev/null"
+          echo
+          echo "### full nginx config dump (server blocks only, trimmed)"
+          run "nginx -T 2>/dev/null | grep -A 30 'server {' | head -200"
+          echo
+          echo "### docker containers (in case it's containerized, e.g. a panel-managed proxy)"
+          run "docker ps 2>/dev/null"
+          echo
+          echo "### contents of /var/www/game-roulette"
+          run "ls -la /var/www/game-roulette/ 2>/dev/null"
