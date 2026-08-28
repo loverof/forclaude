@@ -1,0 +1,976 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Игровая рулетка</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%AE%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --paper: #eceef1;
+    --paper-raised: #ffffff;
+    --ink: #1a1c24;
+    --ink-soft: #5b606f;
+    --line: #d7d9e0;
+    --accent: #c97a1f;
+    --accent-ink: #201200;
+    --teal: #2f7d7a;
+    --teal-ink: #eef8f7;
+    --danger: #b3432b;
+    --good: #2f7d3f;
+    --warn: #a9791a;
+    --shadow: 0 1px 2px rgba(20, 22, 30, .06), 0 8px 24px -12px rgba(20, 22, 30, .18);
+
+    --font-display: "Big Shoulders Display", "Arial Narrow", sans-serif;
+    --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", "Consolas", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #14151d;
+      --paper-raised: #1c1e29;
+      --ink: #edeef2;
+      --ink-soft: #9599a8;
+      --line: #2c2f3c;
+      --accent: #e8a23d;
+      --accent-ink: #201200;
+      --teal: #59b3ae;
+      --teal-ink: #08211f;
+      --good: #5fbf74;
+      --warn: #e0b23d;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 28px -14px rgba(0, 0, 0, .6);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #14151d;
+    --paper-raised: #1c1e29;
+    --ink: #edeef2;
+    --ink-soft: #9599a8;
+    --line: #2c2f3c;
+    --accent: #e8a23d;
+    --accent-ink: #201200;
+    --teal: #59b3ae;
+    --teal-ink: #08211f;
+    --good: #5fbf74;
+    --warn: #e0b23d;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 28px -14px rgba(0, 0, 0, .6);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 20px 64px;
+  }
+
+  header.top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 18px;
+    margin-bottom: 28px;
+  }
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .brand .mark {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: .14em;
+    color: var(--accent);
+    border: 1px solid currentColor;
+    padding: 3px 7px;
+    border-radius: 3px;
+    text-transform: uppercase;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(30px, 4.4vw, 46px);
+    letter-spacing: .01em;
+    margin: 0;
+    text-wrap: balance;
+    line-height: .95;
+  }
+  .subhead {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--ink-soft);
+    max-width: 46ch;
+  }
+  .subhead b { color: var(--ink); font-weight: 500; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+  }
+
+  /* ---- filter rail ---- */
+  .rail { padding: 20px; display: flex; flex-direction: column; gap: 22px; position: sticky; top: 20px; }
+  .field-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .year-range { display: flex; align-items: center; gap: 8px; }
+  .year-range input[type="number"] {
+    width: 100%;
+    font-family: var(--font-mono);
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--ink);
+    padding: 8px 6px;
+    text-align: center;
+  }
+  .year-range span { color: var(--ink-soft); font-family: var(--font-mono); }
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .range-track { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+
+  .chip-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink-soft);
+    cursor: pointer;
+    user-select: none;
+    transition: border-color .12s, color .12s, background .12s;
+  }
+  .chip:hover { border-color: var(--teal); color: var(--ink); }
+  .chip.on {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: var(--teal-ink);
+    font-weight: 500;
+  }
+
+  .search-input {
+    width: 100%;
+    font-family: var(--font-body);
+    font-size: 14px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--ink);
+    padding: 9px 10px;
+  }
+  .search-input::placeholder { color: var(--ink-soft); }
+
+  .stat-line {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--ink-soft);
+    border-top: 1px dashed var(--line);
+    padding-top: 14px;
+  }
+  .stat-line .num {
+    font-size: 22px;
+    color: var(--ink);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .ghost-btn {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    border-radius: 6px;
+    padding: 7px 10px;
+    cursor: pointer;
+  }
+  .ghost-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* ---- main stage ---- */
+  .stage { display: flex; flex-direction: column; gap: 20px; }
+
+  .cartridge {
+    padding: clamp(20px, 4vw, 44px);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+  .cartridge::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(90deg, transparent 0 38px, var(--line) 38px 39px);
+    opacity: .35;
+    pointer-events: none;
+  }
+  .reel-slot {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  /* poster */
+  .poster-box {
+    position: relative;
+    width: 148px;
+    height: 148px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    background: var(--paper);
+    flex-shrink: 0;
+  }
+  .poster-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .poster-fallback {
+    display: none;
+    width: 100%; height: 100%;
+    align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 56px;
+    color: #fff;
+  }
+  .poster-box.spinning img { filter: blur(1px); opacity: .7; }
+
+  .reel-title {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(24px, 5vw, 46px);
+    line-height: .96;
+    letter-spacing: .005em;
+    text-wrap: balance;
+    max-width: 22ch;
+    min-height: 1.1em;
+  }
+  .reel-title.spinning { color: var(--ink-soft); animation: flicker .09s steps(1) infinite; }
+  @keyframes flicker { 50% { opacity: .55; } }
+
+  .reel-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .badge {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 12px;
+  }
+  .badge.date { color: var(--accent); border-color: var(--accent); }
+  .badge.score-high { color: var(--good); border-color: var(--good); }
+  .badge.score-mid { color: var(--warn); border-color: var(--warn); }
+  .badge.score-low { color: var(--danger); border-color: var(--danger); }
+
+  .stage-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+
+  .spin-btn {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: .02em;
+    background: var(--accent);
+    color: var(--accent-ink);
+    border: none;
+    border-radius: 8px;
+    padding: 14px 34px;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: transform .08s;
+  }
+  .spin-btn:hover { transform: translateY(-1px); }
+  .spin-btn:active { transform: translateY(0); }
+  .spin-btn:disabled { opacity: .55; cursor: default; transform: none; }
+
+  .link-btn, .mute-btn {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--ink);
+    border-radius: 8px;
+    padding: 13px 18px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .link-btn:hover { border-color: var(--teal); color: var(--teal); }
+  .mute-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+  .status-btn {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--ink);
+    border-radius: 8px;
+    padding: 13px 16px;
+    cursor: pointer;
+  }
+  .status-btn[data-status="played"]:hover { border-color: var(--teal); color: var(--teal); }
+  .status-btn[data-status="playing"]:hover { border-color: var(--accent); color: var(--accent); }
+  .status-btn[data-status="backlog"]:hover { border-color: var(--warn); color: var(--warn); }
+  .status-btn[data-status="trash"]:hover { border-color: var(--danger); color: var(--danger); }
+
+  .status-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    margin-top: 8px;
+    font-size: 12px;
+  }
+  .status-summary span { white-space: nowrap; }
+  .status-summary .sn { font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 500; }
+
+  .empty-note {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--danger);
+  }
+
+  /* ---- history ---- */
+  .history-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 16px 18px 0;
+  }
+  .history-head h2 {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0;
+    font-weight: 500;
+  }
+  .history-list { list-style: none; margin: 0; padding: 10px 8px 14px; display: flex; flex-direction: column; }
+  .history-list li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px;
+  }
+  .history-list li:hover { background: var(--paper); border-radius: 6px; }
+  .history-list .h-poster {
+    width: 34px; height: 34px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    flex-shrink: 0;
+    position: relative;
+    background: var(--paper);
+  }
+  .history-list .h-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .history-list .h-poster .poster-fallback { font-size: 15px; }
+  .history-list .h-title {
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 14px;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .history-list .h-date {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .history-empty { font-family: var(--font-mono); font-size: 13px; color: var(--ink-soft); padding: 4px 18px 18px; }
+
+  /* ---- view tabs ---- */
+  .view-tabs { display: flex; gap: 6px; }
+  .view-tab {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: .04em;
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: none;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .view-tab:hover { border-color: var(--teal); color: var(--ink); }
+  .view-tab.on { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+  :root:not([data-theme="light"]) .view-tab.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+  /* ---- my games ---- */
+  .mygames-panel { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+  .mygames-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mygames-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; max-height: 60vh; overflow-y: auto; }
+  .mygames-list li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 6px;
+    border-bottom: 1px solid var(--line);
+  }
+  .mygames-list li:last-child { border-bottom: none; }
+  .mygames-list .h-poster {
+    width: 34px; height: 34px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    flex-shrink: 0;
+    position: relative;
+    background: var(--paper);
+  }
+  .mygames-list .h-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .mygames-list .h-poster .poster-fallback { font-size: 15px; }
+  .mygames-list .h-title {
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .mygames-list .h-meta {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .mygames-list .h-plat {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+  .mygames-list .unmark-btn {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    border-radius: 6px;
+    padding: 6px 9px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .mygames-list .unmark-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+  footer.foot {
+    margin-top: 34px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+    text-align: center;
+  }
+  footer.foot a { color: var(--teal); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="mark">RNG</span>
+      <h1>Игровая рулетка</h1>
+    </div>
+    <nav class="view-tabs" id="viewTabs">
+      <button type="button" class="view-tab on" data-view="roulette">Рулетка</button>
+      <button type="button" class="view-tab" data-view="mygames">Мои игры</button>
+    </nav>
+    <p class="subhead" id="subhead"><b>—</b> игр, вышедших с 2000 года — по данным StopGame.ru</p>
+  </header>
+
+  <section class="panel mygames-panel" id="myGamesView" style="display:none;">
+    <div class="mygames-tabs" id="myGamesTabs"></div>
+    <ul class="mygames-list" id="myGamesList"></ul>
+    <p class="history-empty" id="myGamesEmpty">Тут пока пусто.</p>
+  </section>
+
+  <div class="layout" id="rouletteView">
+    <aside class="panel rail">
+      <div>
+        <p class="field-label">Годы выхода</p>
+        <div class="year-range">
+          <input type="number" id="yearFrom" min="2000" max="2026" value="2000">
+          <span>—</span>
+          <input type="number" id="yearTo" min="2000" max="2026" value="2026">
+        </div>
+        <div class="range-track">
+          <input type="range" id="yearFromR" min="2000" max="2026" value="2000">
+          <input type="range" id="yearToR" min="2000" max="2026" value="2026">
+        </div>
+      </div>
+
+      <div>
+        <p class="field-label">Платформы</p>
+        <div class="chip-grid" id="platformChips"></div>
+      </div>
+
+      <div>
+        <p class="field-label">Поиск по названию</p>
+        <input type="text" class="search-input" id="searchBox" placeholder="например: Zelda">
+      </div>
+
+      <div class="stat-line">
+        <span class="num" id="statCount">0</span>
+        игр подходит под фильтр
+        <div class="status-summary" id="statusSummary"></div>
+        <div style="margin-top:10px;">
+          <button class="ghost-btn" id="clearStatus">Очистить все отметки</button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="stage">
+      <section class="panel cartridge">
+        <p class="reel-slot" id="reelSlot">загрузка…</p>
+        <div class="poster-box" id="posterBox">
+          <img id="posterImg" alt="" loading="lazy">
+          <div class="poster-fallback" id="posterFallback"></div>
+        </div>
+        <p class="reel-title" id="reelTitle">?</p>
+        <div class="reel-meta" id="reelMeta"></div>
+        <div class="stage-actions">
+          <button class="spin-btn" id="spinBtn" disabled>Крутить</button>
+          <a class="link-btn" id="openLink" href="#" target="_blank" rel="noopener" style="display:none;">Страница игры →</a>
+        </div>
+        <div class="stage-actions" id="statusActions" style="display:none;">
+          <button class="status-btn" id="stJunk" data-status="trash">Мусор</button>
+          <button class="status-btn" id="stPlayed" data-status="played">Играл</button>
+          <button class="status-btn" id="stPlaying" data-status="playing">Играю сейчас</button>
+          <button class="status-btn" id="stBacklog" data-status="backlog">Буду играть</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="history-head">
+          <h2>Последние результаты</h2>
+        </div>
+        <ul class="history-list" id="historyList"></ul>
+        <p class="history-empty" id="historyEmpty">Пока пусто — крутите рулетку.</p>
+      </section>
+    </main>
+  </div>
+
+  <footer class="foot">Даты релизов — календарь <a href="https://stopgame.ru/games/dates" target="_blank" rel="noopener">stopgame.ru/games/dates</a>. Оценки, время прохождения и часть постеров — <a href="https://rawg.io" target="_blank" rel="noopener">RAWG.io</a>. Список сохраняется у вас в браузере.</footer>
+</div>
+
+<script>
+const PLATFORM_GROUPS = {
+  PC: ["PC"],
+  PlayStation: ["PS","PS2","PS3","PS4","PS5","PSP","PSV"],
+  Xbox: ["XBOX","X360","XONE","XBOXSX"],
+  Nintendo: ["NSW","NSW2","WII","GC","N64","N64DD","NDS","NES","SNES","GB","GBA","GBC","3DS"],
+  Mac: ["MAC"],
+  Linux: ["LINUX"],
+  Mobile: ["IOS","ANDROID","WINPHONE","BLACKBERRY","SYMBIAN","J2ME","BREW","AMZKF"],
+  VR: ["OCULUS"],
+  Browser: ["BROWSER"],
+  Ретро: ["3DO","A26","AMIGA","ATARI","C64","DC","JAG","NG","NGCD","NGPC","OUYA","ONLIVE","SAT","SMD","STADIA","WM","WS","WSC","ZX"],
+};
+function groupFor(tag) {
+  const t = tag.toUpperCase();
+  for (const [group, tags] of Object.entries(PLATFORM_GROUPS)) {
+    if (tags.includes(t)) return group;
+  }
+  return "Другое";
+}
+
+const MONOGRAM_COLORS = ["#c97a1f","#2f7d7a","#8a4fb0","#3a6ea5","#b0524f","#4f8a5c","#a5793a","#6b5fa5"];
+function colorFor(slug) {
+  let h = 0;
+  for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) >>> 0;
+  return MONOGRAM_COLORS[h % MONOGRAM_COLORS.length];
+}
+
+function fmtDate(iso) {
+  const [y,m,d] = iso.split("-");
+  const months = ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
+  return `${parseInt(d,10)} ${months[parseInt(m,10)-1]} ${y}`;
+}
+
+function scoreClass(score) {
+  if (score >= 75) return "score-high";
+  if (score >= 50) return "score-mid";
+  return "score-low";
+}
+
+let GAMES = [];
+let YEAR_MIN = 2000, YEAR_MAX = 2026;
+
+const STATUS_LABELS = { played: "Прошёл", playing: "Играю", backlog: "В планах", trash: "Мусор" };
+
+function loadStatusMap() {
+  const map = new Map(Object.entries(JSON.parse(localStorage.getItem("gr_status") || "{}")));
+  // migrate legacy plain "hidden" list (pre-status version) into "trash"
+  const legacy = JSON.parse(localStorage.getItem("gr_hidden") || "[]");
+  legacy.forEach(slug => { if (!map.has(slug)) map.set(slug, "trash"); });
+  if (legacy.length) localStorage.removeItem("gr_hidden");
+  return map;
+}
+
+const state = {
+  yearFrom: YEAR_MIN,
+  yearTo: YEAR_MAX,
+  platforms: new Set(),
+  search: "",
+  status: loadStatusMap(),
+  history: JSON.parse(localStorage.getItem("gr_history") || "[]"),
+  current: null,
+};
+
+function saveStatus() { localStorage.setItem("gr_status", JSON.stringify(Object.fromEntries(state.status))); }
+function saveHistory() { localStorage.setItem("gr_history", JSON.stringify(state.history.slice(0, 20))); }
+
+function filtered() {
+  const q = state.search.trim().toLowerCase();
+  return GAMES.filter(g => {
+    if (g.year < state.yearFrom || g.year > state.yearTo) return false;
+    if (state.platforms.size && !g.groups.some(gr => state.platforms.has(gr))) return false;
+    if (q && !g.title.toLowerCase().includes(q)) return false;
+    const status = state.status.get(g.slug);
+    if (status && status !== "backlog") return false;
+    return true;
+  });
+}
+
+const els = {
+  yearFrom: document.getElementById("yearFrom"),
+  yearTo: document.getElementById("yearTo"),
+  yearFromR: document.getElementById("yearFromR"),
+  yearToR: document.getElementById("yearToR"),
+  platformChips: document.getElementById("platformChips"),
+  searchBox: document.getElementById("searchBox"),
+  statCount: document.getElementById("statCount"),
+  statusSummary: document.getElementById("statusSummary"),
+  clearStatus: document.getElementById("clearStatus"),
+  subhead: document.getElementById("subhead"),
+  reelSlot: document.getElementById("reelSlot"),
+  posterBox: document.getElementById("posterBox"),
+  posterImg: document.getElementById("posterImg"),
+  posterFallback: document.getElementById("posterFallback"),
+  reelTitle: document.getElementById("reelTitle"),
+  reelMeta: document.getElementById("reelMeta"),
+  spinBtn: document.getElementById("spinBtn"),
+  openLink: document.getElementById("openLink"),
+  statusActions: document.getElementById("statusActions"),
+  historyList: document.getElementById("historyList"),
+  historyEmpty: document.getElementById("historyEmpty"),
+  viewTabs: document.getElementById("viewTabs"),
+  rouletteView: document.getElementById("rouletteView"),
+  myGamesView: document.getElementById("myGamesView"),
+  myGamesTabs: document.getElementById("myGamesTabs"),
+  myGamesList: document.getElementById("myGamesList"),
+  myGamesEmpty: document.getElementById("myGamesEmpty"),
+};
+
+function setPoster(imgEl, fallbackEl, game) {
+  fallbackEl.style.display = "none";
+  fallbackEl.style.background = colorFor(game.slug);
+  fallbackEl.textContent = game.title.trim().charAt(0).toUpperCase();
+  if (game.poster) {
+    imgEl.style.display = "block";
+    imgEl.onerror = () => { imgEl.style.display = "none"; fallbackEl.style.display = "flex"; };
+    imgEl.src = game.poster;
+  } else {
+    imgEl.style.display = "none";
+    fallbackEl.style.display = "flex";
+  }
+}
+
+function syncYears(from, to) {
+  from = Math.max(YEAR_MIN, Math.min(from, to));
+  to = Math.min(YEAR_MAX, Math.max(to, from));
+  state.yearFrom = from; state.yearTo = to;
+  els.yearFrom.value = from; els.yearFromR.value = from;
+  els.yearTo.value = to; els.yearToR.value = to;
+  refresh();
+}
+els.yearFrom.addEventListener("change", () => syncYears(parseInt(els.yearFrom.value||YEAR_MIN,10), state.yearTo));
+els.yearTo.addEventListener("change", () => syncYears(state.yearFrom, parseInt(els.yearTo.value||YEAR_MAX,10)));
+els.yearFromR.addEventListener("input", () => syncYears(parseInt(els.yearFromR.value,10), state.yearTo));
+els.yearToR.addEventListener("input", () => syncYears(state.yearFrom, parseInt(els.yearToR.value,10)));
+
+els.searchBox.addEventListener("input", () => { state.search = els.searchBox.value; refresh(); });
+
+els.clearStatus.addEventListener("click", () => {
+  state.status.clear();
+  saveStatus();
+  refresh();
+});
+
+function refresh() {
+  const list = filtered();
+  els.statCount.textContent = list.length.toLocaleString("ru-RU");
+  els.spinBtn.disabled = list.length === 0;
+
+  const counts = statusCounts();
+  els.statusSummary.innerHTML = Object.entries(STATUS_LABELS)
+    .map(([key, label]) => {
+      const hint = key === "backlog" ? ' title="Остаётся в случайном выборе"' : "";
+      return `<span${hint}>${label}: <span class="sn">${counts[key]}</span></span>`;
+    })
+    .join("");
+}
+
+function statusCounts() {
+  const counts = { played: 0, playing: 0, backlog: 0, trash: 0 };
+  for (const status of state.status.values()) if (counts[status] !== undefined) counts[status]++;
+  return counts;
+}
+
+let activeMyGamesTab = "played";
+
+function renderMyGamesTabs() {
+  const counts = statusCounts();
+  els.myGamesTabs.innerHTML = "";
+  Object.entries(STATUS_LABELS).forEach(([key, label]) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "chip" + (key === activeMyGamesTab ? " on" : "");
+    btn.textContent = `${label} (${counts[key]})`;
+    btn.addEventListener("click", () => {
+      activeMyGamesTab = key;
+      renderMyGamesTabs();
+      renderMyGamesList();
+    });
+    els.myGamesTabs.appendChild(btn);
+  });
+}
+
+function renderMyGamesList() {
+  const items = GAMES.filter(g => state.status.get(g.slug) === activeMyGamesTab)
+    .sort((a, b) => b.date.localeCompare(a.date));
+  els.myGamesList.innerHTML = "";
+  els.myGamesEmpty.style.display = items.length ? "none" : "block";
+  items.forEach(g => {
+    const li = document.createElement("li");
+    const posterHtml = g.poster
+      ? `<img src="${g.poster}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">`
+      : "";
+    li.innerHTML =
+      `<span class="h-poster">${posterHtml}<span class="poster-fallback" style="${g.poster ? "" : "display:flex;"}background:${colorFor(g.slug)}">${g.title.trim().charAt(0).toUpperCase()}</span></span>` +
+      `<span class="h-meta"><span class="h-title">${g.title}</span><span class="h-plat">${fmtDate(g.date)} · ${g.platforms.join(", ")}</span></span>` +
+      `<button type="button" class="unmark-btn" data-slug="${g.slug}">Снять отметку</button>`;
+    els.myGamesList.appendChild(li);
+  });
+}
+
+els.myGamesList.addEventListener("click", (e) => {
+  const btn = e.target.closest(".unmark-btn");
+  if (!btn) return;
+  state.status.delete(btn.dataset.slug);
+  saveStatus();
+  refresh();
+  renderMyGamesTabs();
+  renderMyGamesList();
+});
+
+els.viewTabs.addEventListener("click", (e) => {
+  const btn = e.target.closest(".view-tab");
+  if (!btn) return;
+  const view = btn.dataset.view;
+  els.viewTabs.querySelectorAll(".view-tab").forEach(b => b.classList.toggle("on", b === btn));
+  if (view === "mygames") {
+    els.rouletteView.style.display = "none";
+    els.myGamesView.style.display = "block";
+    renderMyGamesTabs();
+    renderMyGamesList();
+  } else {
+    els.myGamesView.style.display = "none";
+    els.rouletteView.style.display = "grid";
+  }
+});
+
+function renderHistory() {
+  els.historyList.innerHTML = "";
+  els.historyEmpty.style.display = state.history.length ? "none" : "block";
+  state.history.slice(0, 8).forEach(h => {
+    const li = document.createElement("li");
+    const posterHtml = h.poster
+      ? `<img src="${h.poster}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">`
+      : "";
+    li.innerHTML =
+      `<span class="h-poster">${posterHtml}<span class="poster-fallback" style="${h.poster ? "" : "display:flex;"}background:${colorFor(h.slug)}">${h.title.trim().charAt(0).toUpperCase()}</span></span>` +
+      `<span class="h-title">${h.title}</span><span class="h-date">${fmtDate(h.date)}</span>`;
+    els.historyList.appendChild(li);
+  });
+}
+
+let spinTimer = null;
+function spin() {
+  const list = filtered();
+  if (!list.length) return;
+  els.spinBtn.disabled = true;
+  els.reelSlot.textContent = "крутим…";
+  els.reelTitle.classList.add("spinning");
+  els.posterBox.classList.add("spinning");
+  els.openLink.style.display = "none";
+  els.statusActions.style.display = "none";
+  els.reelMeta.innerHTML = "";
+
+  let ticks = 0;
+  const maxTicks = 16;
+  spinTimer = setInterval(() => {
+    const r = list[Math.floor(Math.random() * list.length)];
+    els.reelTitle.textContent = r.title;
+    setPoster(els.posterImg, els.posterFallback, r);
+    ticks++;
+    if (ticks >= maxTicks) {
+      clearInterval(spinTimer);
+      land(list[Math.floor(Math.random() * list.length)]);
+    }
+  }, 70);
+}
+
+function land(game) {
+  state.current = game;
+  els.reelTitle.classList.remove("spinning");
+  els.posterBox.classList.remove("spinning");
+  els.reelTitle.textContent = game.title;
+  els.reelSlot.textContent = "выбрано";
+  setPoster(els.posterImg, els.posterFallback, game);
+
+  let meta = `<span class="badge date">${fmtDate(game.date)}</span>`;
+  if (game.metacritic) meta += `<span class="badge ${scoreClass(game.metacritic)}">Metacritic ${game.metacritic}</span>`;
+  if (game.playtime) meta += `<span class="badge">~${game.playtime} ч. на прохождение</span>`;
+  meta += game.platforms.map(p => `<span class="badge">${p}</span>`).join("");
+  els.reelMeta.innerHTML = meta;
+
+  els.openLink.href = `https://stopgame.ru/game/${game.slug}`;
+  els.openLink.style.display = "inline-flex";
+  els.statusActions.style.display = "flex";
+  els.spinBtn.disabled = false;
+
+  state.history.unshift({ title: game.title, date: game.date, slug: game.slug, poster: game.poster });
+  saveHistory();
+  renderHistory();
+}
+
+els.spinBtn.addEventListener("click", spin);
+
+els.statusActions.querySelectorAll(".status-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    if (!state.current) return;
+    const status = btn.dataset.status;
+    state.status.set(state.current.slug, status);
+    saveStatus();
+    refresh();
+    els.reelSlot.textContent = `отмечено: «${STATUS_LABELS[status].toLowerCase()}» — крутите ещё раз`;
+    els.statusActions.style.display = "none";
+    els.openLink.style.display = "none";
+  });
+});
+
+async function init() {
+  els.reelSlot.textContent = "загрузка списка игр…";
+  const resp = await fetch("/games.json");
+  const raw = await resp.json();
+
+  GAMES = raw.map(g => {
+    const platforms = g.platforms || [];
+    return {
+      title: g.title,
+      date: g.date,
+      year: parseInt(g.date.slice(0, 4), 10),
+      platforms,
+      groups: [...new Set(platforms.map(groupFor))],
+      slug: g.slug,
+      poster: g.poster || null,
+      metacritic: g.metacritic || null,
+      playtime: g.playtime || null,
+    };
+  });
+
+  YEAR_MIN = GAMES.length ? Math.min(...GAMES.map(g => g.year)) : 2000;
+  YEAR_MAX = GAMES.length ? Math.max(...GAMES.map(g => g.year)) : 2026;
+
+  [els.yearFrom, els.yearTo, els.yearFromR, els.yearToR].forEach(el => {
+    el.min = YEAR_MIN; el.max = YEAR_MAX;
+  });
+  els.yearFrom.value = els.yearFromR.value = YEAR_MIN;
+  els.yearTo.value = els.yearToR.value = YEAR_MAX;
+  state.yearFrom = YEAR_MIN;
+  state.yearTo = YEAR_MAX;
+
+  const allGroups = Object.keys(PLATFORM_GROUPS).filter(g => GAMES.some(game => game.groups.includes(g)));
+  allGroups.forEach(group => {
+    const chip = document.createElement("button");
+    chip.className = "chip";
+    chip.textContent = group;
+    chip.type = "button";
+    chip.addEventListener("click", () => {
+      if (state.platforms.has(group)) state.platforms.delete(group);
+      else state.platforms.add(group);
+      chip.classList.toggle("on");
+      refresh();
+    });
+    els.platformChips.appendChild(chip);
+  });
+
+  els.subhead.innerHTML = `<b>${GAMES.length.toLocaleString("ru-RU")}</b> игр, вышедших с ${YEAR_MIN} года — по данным StopGame.ru и RAWG.io`;
+  els.reelSlot.textContent = "нажмите «крутить»";
+
+  refresh();
+  renderHistory();
+}
+
+init();
+</script>
+</body>
+</html>
