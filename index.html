@@ -111,14 +111,6 @@
     text-wrap: balance;
     line-height: .95;
   }
-  .subhead {
-    font-family: var(--font-mono);
-    font-size: 13px;
-    color: var(--ink-soft);
-    max-width: 46ch;
-  }
-  .subhead b { color: var(--ink); font-weight: 500; }
-
   .layout {
     display: grid;
     grid-template-columns: 300px 1fr;
@@ -532,7 +524,6 @@
       <button type="button" class="view-tab on" data-view="roulette">Рулетка</button>
       <button type="button" class="view-tab" data-view="mygames">Мои игры</button>
     </nav>
-    <p class="subhead" id="subhead"><b>—</b> игр, вышедших с 2000 года — по данным StopGame.ru</p>
   </header>
 
   <section class="panel mygames-panel" id="myGamesView" style="display:none;">
@@ -607,7 +598,6 @@
     </main>
   </div>
 
-  <footer class="foot">Даты релизов — календарь <a href="https://stopgame.ru/games/dates" target="_blank" rel="noopener">stopgame.ru/games/dates</a>. Оценки, время прохождения и часть постеров — <a href="https://rawg.io" target="_blank" rel="noopener">RAWG.io</a>. Список сохраняется у вас в браузере.</footer>
 </div>
 
 <script>
@@ -699,7 +689,6 @@ const els = {
   statCount: document.getElementById("statCount"),
   statusSummary: document.getElementById("statusSummary"),
   clearStatus: document.getElementById("clearStatus"),
-  subhead: document.getElementById("subhead"),
   reelSlot: document.getElementById("reelSlot"),
   posterBox: document.getElementById("posterBox"),
   posterImg: document.getElementById("posterImg"),
@@ -963,7 +952,6 @@ async function init() {
     els.platformChips.appendChild(chip);
   });
 
-  els.subhead.innerHTML = `<b>${GAMES.length.toLocaleString("ru-RU")}</b> игр, вышедших с ${YEAR_MIN} года — по данным StopGame.ru и RAWG.io`;
   els.reelSlot.textContent = "нажмите «крутить»";
 
   refresh();
